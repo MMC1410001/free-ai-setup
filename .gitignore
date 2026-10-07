@@ -1,0 +1,9 @@
+.env
+node_modules/
+runtime/
+state/
+*.log
+.DS_Store
+Thumbs.db
+.claude/settings.local.json*
+scripts/chat-launch.vbs

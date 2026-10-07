@@ -1,0 +1,16 @@
+{
+  "name": "default",
+  "strategy": "priority",
+  "models": [
+    { "model": "kiro/claude-sonnet-4.5", "providerId": "kiro" },
+    { "model": "kiro/claude-haiku-4.5", "providerId": "kiro" },
+    { "model": "kiro/qwen3-coder-next", "providerId": "kiro" },
+    { "model": "kiro/glm-5", "providerId": "kiro" },
+    { "model": "nvidia/nemotron-3-super-120b-a12b", "providerId": "nvidia" },
+    { "model": "nvidia/nemotron-3.5-lightning-30b-a3b", "providerId": "nvidia" },
+    { "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "providerId": "nvidia" },
+    { "model": "deepseek-ai/deepseek-v4.1-flash", "providerId": "nvidia" },
+    { "model": "z-ai/glm-5.3", "providerId": "nvidia" },
+    { "model": "openai/gpt-oss-20b", "providerId": "nvidia" }
+  ]
+}

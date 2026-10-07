@@ -1,0 +1,5 @@
+{
+  "_comment": "Requests for these model names go to the combo below. Claude Code sends real Claude model ids (for example claude-opus-5-5) when a chat switches mode mid-session; without this OmniRoute answers 400.",
+  "combo": "default",
+  "patterns": ["claude-*", "anthropic/*"]
+}

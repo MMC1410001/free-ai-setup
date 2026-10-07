@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Claude: Use PAID",
+      "type": "shell",
+      "command": "node scripts/omni-switch.mjs paid && bash scripts/vscode-reload.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Claude: Use FREE (OmniRoute)",
+      "type": "shell",
+      "command": "node scripts/omni-switch.mjs free && bash scripts/vscode-reload.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Claude: Show mode",
+      "type": "shell",
+      "command": "node scripts/omni-switch.mjs status",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "_comment": "Providers this setup expects. Credentials are NEVER stored here; the installer asks for them and keeps them in .env.",
+  "providers": [
+    {
+      "id": "kiro",
+      "name": "Kiro AI",
+      "auth": "oauth-device",
+      "free": true,
+      "note": "Optional. Free 50 credits/month, reset monthly. Browser sign-in (GitHub or Google), no card. Serves Claude Sonnet 4.5 / Haiku 4.5, GLM-5, Qwen3 Coder Next.",
+      "required": false
+    },
+    {
+      "id": "nvidia",
+      "name": "NVIDIA NIM",
+      "auth": "apikey",
+      "envVar": "NVIDIA_NIM_KEY",
+      "free": true,
+      "note": "Required. Free NVIDIA Developer Program access: no token cap, about 40 requests/minute, for prototyping and development. Key from https://build.nvidia.com",
+      "required": true
+    }
+  ]
+}

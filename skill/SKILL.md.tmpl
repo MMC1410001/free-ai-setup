@@ -1,0 +1,14 @@
+---
+name: omni
+description: Switch Claude Code in the current project between paid Claude and free OmniRoute, or show free token usage. Use when the user asks to switch to free or paid Claude, go back to paid, check which mode is on, or see OmniRoute token usage. Args - status | free | paid | toggle | usage.
+argument-hint: "[status|free|paid|toggle|usage]"
+allowed-tools: Bash(__NODE_RULE__ *)
+---
+
+The command below already ran on this computer before this message was sent. Do not run it again and do not run any tool.
+
+```
+!`__NODE__ "__SCRIPT__" --dir "${CLAUDE_PROJECT_DIR}" $ARGUMENTS 2>&1`
+```
+
+Show the output above to the user verbatim in a code block. Nothing else.

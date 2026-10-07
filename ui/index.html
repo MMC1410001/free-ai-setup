@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OmniRoute Chat</title>
+<link rel="icon" href="/icon.svg">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0f766e">
+<script src="/vendor/marked.min.js"></script>
+<script src="/vendor/purify.min.js"></script>
+<style>
+:root {
+  --bg: #f7f7f5; --panel: #ffffff; --side: #efeee9; --text: #1f2328; --muted: #6b6f76;
+  --line: #e2e1dc; --accent: #0f766e; --accent-ink: #ffffff; --accent-soft: #e3f1ef;
+  --user: #e9f2f1; --danger: #b42318; --warn: #a15c07; --code: #f2f1ec; --shadow: 0 8px 30px rgba(0,0,0,.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191c; --panel: #1f2226; --side: #131517; --text: #e8e9ea; --muted: #9aa0a6;
+    --line: #2e3237; --accent: #2bb3a3; --accent-ink: #062b27; --accent-soft: #163a36;
+    --user: #1d3330; --danger: #f07167; --warn: #e0a84a; --code: #26292e; --shadow: 0 8px 30px rgba(0,0,0,.5);
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); }
+.app { display: grid; grid-template-columns: 270px 1fr; height: 100vh; }
+
+/* sidebar */
+.side { background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 16px 16px 8px; font-weight: 650; }
+.brand img { width: 26px; height: 26px; }
+.new { margin: 8px 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; text-align: left; font-weight: 550; }
+.new:hover { border-color: var(--accent); }
+.chats { flex: 1; overflow-y: auto; padding: 4px 8px; }
+.chat-item { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text); }
+.chat-item:hover { background: var(--panel); }
+.chat-item.active { background: var(--accent-soft); }
+.chat-item span { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; }
+.chat-item button { opacity: 0; border: 0; background: none; color: var(--muted); padding: 2px 6px; border-radius: 6px; }
+.chat-item:hover button { opacity: 1; }
+.chat-item button:hover { color: var(--danger); }
+.side-foot { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; }
+.meter { font-size: 12.5px; color: var(--muted); display: grid; gap: 6px; }
+.meter b { color: var(--text); font-weight: 600; }
+.bar { height: 6px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; }
+.ghost { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 9px 12px; text-align: left; }
+.ghost:hover { border-color: var(--accent); }
+
+/* main */
+.main { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.top { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.menu { display: none; border: 0; background: none; font-size: 20px; padding: 4px 8px; }
+.title { flex: 1; font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: #22a06b; } .dot.bad { background: var(--danger); }
+select.model { max-width: 280px; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); }
+
+.scroll { flex: 1; overflow-y: auto; }
+.thread { max-width: 820px; margin: 0 auto; padding: 24px 20px 12px; }
+.empty { text-align: center; color: var(--muted); margin-top: 12vh; }
+.empty h1 { color: var(--text); font-size: 26px; margin: 12px 0 6px; font-weight: 650; }
+.empty img { width: 56px; }
+.tips { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; max-width: 560px; margin: 24px auto 0; }
+.tips button { text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); font-size: 14px; }
+.tips button:hover { border-color: var(--accent); }
+
+.msg { margin: 0 0 22px; display: flex; flex-direction: column; }
+.msg.user { align-items: flex-end; }
+.bubble { max-width: 100%; overflow-wrap: anywhere; }
+.msg.user .bubble { background: var(--user); padding: 10px 14px; border-radius: 16px 16px 4px 16px; max-width: 85%; white-space: pre-wrap; }
+.msg.assistant .bubble { padding: 2px 2px; }
+.msg .meta { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; gap: 12px; align-items: center; }
+.meta button { border: 0; background: none; color: var(--muted); padding: 0; font-size: 12px; }
+.meta button:hover { color: var(--accent); }
+.attach-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; justify-content: flex-end; align-items: center; }
+.attach-list img { max-height: 120px; max-width: 200px; border-radius: 10px; border: 1px solid var(--line); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; padding: 4px 9px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; }
+.chip button { border: 0; background: none; color: var(--muted); padding: 0 2px; }
+.bubble p:first-child { margin-top: 0; } .bubble p:last-child { margin-bottom: 0; }
+.bubble pre { background: var(--code); padding: 12px 14px; border-radius: 10px; overflow-x: auto; position: relative; font-size: 13.5px; }
+.bubble code { background: var(--code); padding: 1px 5px; border-radius: 5px; font-size: 13.5px; }
+.bubble pre code { background: none; padding: 0; }
+.bubble table { border-collapse: collapse; display: block; overflow-x: auto; }
+.bubble th, .bubble td { border: 1px solid var(--line); padding: 6px 10px; }
+.copy { position: absolute; top: 6px; right: 6px; font-size: 12px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 2px 8px; color: var(--muted); }
+details.think { margin: 0 0 10px; font-size: 13.5px; color: var(--muted); border-left: 3px solid var(--line); padding: 2px 0 2px 12px; }
+details.think summary { cursor: pointer; user-select: none; }
+details.think div { white-space: pre-wrap; margin-top: 6px; max-height: 260px; overflow-y: auto; }
+.error { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+.typing { display: inline-flex; gap: 4px; padding: 6px 0; }
+.typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; }
+.typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+/* composer */
+.composer-wrap { padding: 8px 20px 18px; }
+.composer { max-width: 820px; margin: 0 auto; border: 1px solid var(--line); background: var(--panel); border-radius: 18px; padding: 10px 10px 8px 14px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.composer.drag { border-color: var(--accent); background: var(--accent-soft); }
+.pending { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.pending:empty { display: none; }
+.pending .thumb { position: relative; }
+.pending .thumb img { height: 56px; width: 56px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); display: block; }
+.pending .thumb button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); font-size: 12px; line-height: 1; padding: 0; }
+.row { display: flex; align-items: flex-end; gap: 8px; }
+textarea { flex: 1; border: 0; outline: none; resize: none; background: transparent; max-height: 220px; min-height: 26px; padding: 6px 0; }
+.icon { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--line); background: var(--bg); display: grid; place-items: center; flex: none; color: var(--muted); }
+.icon:hover { color: var(--accent); border-color: var(--accent); }
+.send { width: 38px; height: 38px; border-radius: 11px; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.send:disabled { opacity: .45; cursor: default; }
+.hint { max-width: 820px; margin: 6px auto 0; font-size: 12px; color: var(--muted); text-align: center; }
+
+/* modal */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
+.overlay.open { display: flex; }
+.modal { background: var(--panel); width: min(760px, 100%); max-height: min(720px, 92vh); border-radius: 16px; box-shadow: var(--shadow); display: grid; grid-template-columns: 180px 1fr; overflow: hidden; }
+.tabs { background: var(--side); padding: 14px 8px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--line); }
+.tabs h3 { margin: 4px 10px 10px; font-size: 15px; }
+.tabs button { text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 8px; color: var(--text); }
+.tabs button.on { background: var(--accent-soft); font-weight: 600; }
+.pane { padding: 20px 22px; overflow-y: auto; position: relative; }
+.pane h2 { margin: 0 0 4px; font-size: 18px; }
+.pane .sub { color: var(--muted); margin: 0 0 16px; font-size: 13.5px; }
+.close { position: absolute; top: 12px; right: 12px; border: 0; background: none; font-size: 20px; color: var(--muted); }
+.field { display: grid; gap: 6px; margin-bottom: 16px; }
+.field label { font-weight: 600; font-size: 13.5px; }
+.field small { color: var(--muted); }
+.input { padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); width: 100%; }
+.btn { padding: 9px 14px; border-radius: 9px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.light { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .5; }
+.card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--muted); }
+.badge.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.inline { display: flex; gap: 8px; }
+.note { font-size: 13px; color: var(--muted); }
+.note.err { color: var(--danger); } .note.ok { color: #22a06b; }
+ol.steps { margin: 6px 0 12px; padding-left: 20px; font-size: 13.5px; }
+.chain { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.chain li { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; font-size: 13.5px; }
+.chain li.off { opacity: .5; }
+.chain li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chain li button { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 0 7px; font-size: 13px; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 14px; }
+.stat { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.stat b { display: block; font-size: 20px; }
+.stat span { font-size: 12.5px; color: var(--muted); }
+.code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 18px; letter-spacing: 2px; background: var(--code); padding: 6px 10px; border-radius: 8px; display: inline-block; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 10px; font-size: 13.5px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
+.toast.show { opacity: 1; }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  .side { position: fixed; inset: 0 auto 0 0; width: 280px; z-index: 15; transform: translateX(-100%); transition: transform .2s; }
+  .side.open { transform: none; box-shadow: var(--shadow); }
+  .menu { display: block; }
+  .modal { grid-template-columns: 1fr; }
+  .tabs { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .tabs h3 { display: none; }
+  .tips { grid-template-columns: 1fr; }
+  select.model { max-width: 150px; }
+  .status span { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand"><img src="/icon.svg" alt=""> OmniRoute Chat</div>
+    <button class="new" id="newChat">＋ New chat</button>
+    <nav class="chats" id="chatList" aria-label="Chats"></nav>
+    <div class="side-foot">
+      <div class="meter" id="meter">Loading usage…</div>
+      <button class="ghost" id="openSettings">⚙︎ Settings, keys and limits</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <button class="menu" id="menu" aria-label="Chats">☰</button>
+      <div class="title" id="chatTitle">New chat</div>
+      <select class="model" id="model" title="Model"></select>
+      <span class="status" id="status"><i class="dot"></i><span>Checking…</span></span>
+    </header>
+
+    <div class="scroll" id="scroll"><div class="thread" id="thread"></div></div>
+
+    <div class="composer-wrap">
+      <div class="composer" id="composer">
+        <div class="pending" id="pending"></div>
+        <div class="row">
+          <button class="icon" id="attach" title="Attach images or files" aria-label="Attach">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>
+          </button>
+          <input type="file" id="file" multiple hidden
+            accept="image/*,.pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.xml,.html,.css,.js,.ts,.tsx,.jsx,.py,.java,.go,.rb,.php,.sql,.yaml,.yml,.log,.sh">
+          <textarea id="input" rows="1" placeholder="Message OmniRoute… (Shift+Enter for a new line)"></textarea>
+          <button class="send" id="send" title="Send" aria-label="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="hint">Free models can make mistakes. Do not paste passwords or customer data. Drop or paste images and files here.</div>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="modal">
+    <div class="tabs" id="tabs">
+      <h3>Settings</h3>
+      <button data-tab="keys" class="on">Keys and providers</button>
+      <button data-tab="limits">Usage and limits</button>
+      <button data-tab="models">Models</button>
+      <button data-tab="general">General</button>
+    </div>
+    <div class="pane" id="pane"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = (n) => (n >= 1e9 ? (n / 1e9).toFixed(1) + "B" : n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "k" : String(n || 0));
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+function toast(text) {
+  const t = $("#toast"); t.textContent = text; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+async function call(path, body) {
+  const opts = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json", "x-omni-chat": "1" }, body: JSON.stringify(body) };
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+// ── saved chats (this browser only) ────────────────────────────────
+const STORE = "omni-chat-v1";
+let chats = [];
+let current = null;
+try { chats = JSON.parse(localStorage.getItem(STORE) || "[]"); } catch { chats = []; }
+
+function save() {
+  const data = chats.map((c) => ({ ...c, messages: c.messages.map(({ images, ...m }) => ({ ...m, imageCount: (images || []).length || m.imageCount || 0 })) }));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try { localStorage.setItem(STORE, JSON.stringify(data)); return; }
+    catch {
+      // Storage full: drop attached file text from the oldest chats first.
+      for (const c of data.slice().reverse()) for (const m of c.messages) delete m.fileText;
+    }
+  }
+}
+
+function newChat() {
+  current = { id: uid(), title: "New chat", created: Date.now(), messages: [] };
+  renderAll();
+  $("#input").focus();
+}
+
+function openChat(id) {
+  current = chats.find((c) => c.id === id) || null;
+  if (!current) return newChat();
+  renderAll();
+  $("#side").classList.remove("open");
+}
+
+function deleteChat(id) {
+  if (!confirm("Delete this chat?")) return;
+  chats = chats.filter((c) => c.id !== id);
+  save();
+  if (current?.id === id) newChat(); else renderList();
+}
+
+function renderList() {
+  const list = $("#chatList");
+  list.innerHTML = chats.length ? "" : '<div class="note" style="padding:8px 10px">No chats yet.</div>';
+  for (const c of chats) {
+    const el = document.createElement("div");
+    el.className = "chat-item" + (current?.id === c.id ? " active" : "");
+    el.innerHTML = `<span>${esc(c.title)}</span><button title="Delete" aria-label="Delete chat">✕</button>`;
+    el.onclick = () => openChat(c.id);
+    el.querySelector("button").onclick = (e) => { e.stopPropagation(); deleteChat(c.id); };
+    list.appendChild(el);
+  }
+}
+
+// ── server state: status, usage, models ───────────────────────────
+let S = null;
+async function refreshState() {
+  try { S = await call("/api/state"); } catch (e) { S = { gatewayUp: false, error: e.message }; }
+  renderStatus(); renderMeter(); renderModels();
+  return S;
+}
+
+function renderStatus() {
+  const st = $("#status");
+  let cls = "bad", text = "OmniRoute is not running";
+  if (S?.gatewayUp && !S.providers?.nvidia && !S.providers?.kiro) { cls = "bad"; text = "Add your NVIDIA key"; }
+  else if (S?.gatewayUp) { cls = "ok"; text = "Free models ready"; }
+  st.innerHTML = `<i class="dot ${cls}"></i><span>${text}</span>`;
+}
+
+function renderMeter() {
+  const u = S?.usage || {};
+  const lim = S?.settings?.dailyTokenLimit || 0;
+  if (u.error) { $("#meter").innerHTML = `<span>${esc(u.error)}</span>`; return; }
+  const today = u.today?.tokens || 0;
+  let html = `<div>Today: <b>${fmt(today)}</b> tokens · ${u.today?.requests || 0} requests</div>`;
+  if (lim) html += `<div class="bar"><i style="width:${Math.min(100, (today / lim) * 100)}%"></i></div><div>Daily limit ${fmt(lim)}</div>`;
+  if (u.kiro?.total) html += `<div>Kiro: <b>${u.kiro.remaining.toFixed(1)}</b> of ${u.kiro.total} credits left</div>`;
+  if (u.nvidia) html += `<div>NVIDIA: no token cap, about ${u.nvidia.rpm} requests/min</div>`;
+  $("#meter").innerHTML = html;
+}
+
+function modelOptions() {
+  const opts = [{ id: "default", label: "Auto · best free model" }, { id: "vision", label: "Auto · for images" }];
+  const seen = new Set();
+  for (const m of [...(S?.chains?.default || []), ...(S?.chains?.vision || [])]) {
+    if (!m.available || seen.has(m.id)) continue;
+    seen.add(m.id);
+    opts.push({ id: m.id, label: m.id.replace(/^(nvidia|kiro)\//, "").replace(/^nvidia\//, "") + (m.providerId === "kiro" ? " (Kiro)" : " (NVIDIA)") });
+  }
+  return opts;
+}
+
+function renderModels() {
+  const sel = $("#model");
+  const want = S?.settings?.defaultModel || "default";
+  sel.innerHTML = modelOptions().map((o) => `<option value="${esc(o.id)}">${esc(o.label)}</option>`).join("");
+  sel.value = [...sel.options].some((o) => o.value === want) ? want : "default";
+}
+$("#model").onchange = () => call("/api/settings", { defaultModel: $("#model").value }).catch(() => {});
+
+// ── messages ───────────────────────────────────────────────────────
+marked.setOptions({ gfm: true, breaks: true });
+const md = (text) => DOMPurify.sanitize(marked.parse(text || ""));
+
+/** Some models put their reasoning inside <think> tags in the answer. */
+function splitThink(text, reasoning) {
+  let answer = text || "", think = reasoning || "";
+  const m = answer.match(/^\s*<think>([\s\S]*?)(<\/think>|$)/);
+  if (m) { think = (think + "\n" + m[1]).trim(); answer = answer.slice(m[0].length); }
+  return { answer, think };
+}
+
+const TIPS = [
+  "Summarise this text in five bullet points:",
+  "Write a polite follow-up email about",
+  "Explain this error message and how to fix it:",
+  "Draft a short project update for my team about",
+];
+
+function renderThread() {
+  const th = $("#thread");
+  $("#chatTitle").textContent = current?.title || "New chat";
+  if (!current?.messages.length) {
+    th.innerHTML = `<div class="empty"><img src="/icon.svg" alt=""><h1>How can I help?</h1>
+      <div>Chat with free AI models through OmniRoute. Attach images, PDFs, Word, Excel or text files.</div>
+      <div class="tips">${TIPS.map((t) => `<button>${esc(t)}</button>`).join("")}</div></div>`;
+    th.querySelectorAll(".tips button").forEach((b) => (b.onclick = () => { $("#input").value = b.textContent + " "; grow(); $("#input").focus(); }));
+    return;
+  }
+  th.innerHTML = "";
+  current.messages.forEach((m, i) => th.appendChild(renderMessage(m, i)));
+  scrollDown(true);
+}
+
+function renderMessage(m, index) {
+  const el = document.createElement("div");
+  el.className = `msg ${m.role}`;
+  if (m.role === "user") {
+    const att = [];
+    for (const src of m.images || []) att.push(`<img src="${src}" alt="attached image">`);
+    if (!(m.images || []).length && m.imageCount) att.push(`<span class="chip">🖼 ${m.imageCount} image(s)</span>`);
+    for (const f of m.files || []) att.push(`<span class="chip">📄 ${esc(f.name)}</span>`);
+    el.innerHTML = (att.length ? `<div class="attach-list">${att.join("")}</div>` : "") + `<div class="bubble">${esc(m.text)}</div>`;
+    return el;
+  }
+  const { answer, think } = splitThink(m.text, m.reasoning);
+  let html = "";
+  if (think) html += `<details class="think"><summary>Thinking${m.streaming && !answer ? "…" : ""}</summary><div>${esc(think)}</div></details>`;
+  if (answer) html += md(answer);
+  else if (m.streaming && !m.error) html += `<span class="typing"><i></i><i></i><i></i></span>`;
+  if (m.error) html += `<div class="error">${esc(m.error)}</div>`;
+  el.innerHTML = `<div class="bubble">${html}</div>`;
+  el.querySelectorAll("pre").forEach((pre) => {
+    const b = document.createElement("button");
+    b.className = "copy"; b.textContent = "Copy";
+    b.onclick = () => { navigator.clipboard.writeText(pre.innerText.replace(/Copy$/, "")); b.textContent = "Copied"; };
+    pre.appendChild(b);
+  });
+  if (!m.streaming) {
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const bits = [];
+    if (m.model) bits.push(esc(m.model));
+    if (m.usage?.total_tokens) bits.push(`${fmt(m.usage.total_tokens)} tokens`);
+    meta.innerHTML = `<span>${bits.join(" · ")}</span><button data-a="copy">Copy</button>` +
+      (index === current.messages.length - 1 ? `<button data-a="retry">Retry</button>` : "");
+    meta.querySelector('[data-a="copy"]').onclick = () => { navigator.clipboard.writeText(answer); toast("Copied"); };
+    const r = meta.querySelector('[data-a="retry"]');
+    if (r) r.onclick = retry;
+    el.appendChild(meta);
+  }
+  return el;
+}
+
+function scrollDown(force) {
+  const sc = $("#scroll");
+  if (force || sc.scrollHeight - sc.scrollTop - sc.clientHeight < 160) sc.scrollTop = sc.scrollHeight;
+}
+
+function renderAll() { renderList(); renderThread(); renderPending(); }
+
+// ── attachments ────────────────────────────────────────────────────
+let pending = []; // { name, kind: "image"|"file", dataUrl?, text?, status }
+const TEXT_LIMIT = 200000;
+
+const libs = {};
+function loadScript(src) {
+  return libs[src] ||= new Promise((ok, fail) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = ok; s.onerror = () => fail(new Error("Could not load the file reader. Run the installer again, or check your internet connection."));
+    document.head.appendChild(s);
+  });
+}
+
+async function readImage(file) {
+  const url = await new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(file); });
+  const img = await new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => fail(new Error("This image type is not supported.")); i.src = url; });
+  const max = 1600, scale = Math.min(1, max / Math.max(img.width, img.height));
+  if (scale === 1 && file.size < 1.5e6 && /jpe?g|png|webp/.test(file.type)) return url;
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.85);
+}
+
+async function readText(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf")) {
+    await loadScript("/vendor/pdf.min.js");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/vendor/pdf.worker.min.js";
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const pages = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const tc = await (await pdf.getPage(p)).getTextContent();
+      pages.push(`[Page ${p}]\n` + tc.items.map((i) => i.str).join(" "));
+    }
+    const text = pages.join("\n\n");
+    if (!text.replace(/\[Page \d+\]/g, "").trim()) throw new Error("This PDF has no text layer (it is a scan). Send it as an image instead.");
+    return text;
+  }
+  if (name.endsWith(".docx")) {
+    await loadScript("/vendor/mammoth.browser.min.js");
+    return (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value;
+  }
+  if (/\.(xlsx|xls)$/.test(name)) {
+    await loadScript("/vendor/xlsx.full.min.js");
+    const wb = XLSX.read(await file.arrayBuffer());
+    return wb.SheetNames.map((n) => `Sheet: ${n}\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n])).join("\n\n");
+  }
+  if (file.size > 5e6) throw new Error("Text files over 5 MB are too big for a chat.");
+  return await file.text();
+}
+
+async function addFiles(files) {
+  for (const file of files) {
+    const item = { id: uid(), name: file.name || "pasted image", kind: file.type.startsWith("image/") ? "image" : "file", status: "reading" };
+    pending.push(item); renderPending();
+    try {
+      if (item.kind === "image") item.dataUrl = await readImage(file);
+      else {
+        let text = await readText(file);
+        if (text.length > TEXT_LIMIT) { text = text.slice(0, TEXT_LIMIT); toast(`${item.name}: only the first ${fmt(TEXT_LIMIT)} characters are sent`); }
+        item.text = text;
+      }
+      item.status = "ready";
+    } catch (e) {
+      pending = pending.filter((p) => p !== item);
+      toast(`${item.name}: ${e.message}`);
+    }
+    renderPending();
+  }
+}
+
+function renderPending() {
+  const box = $("#pending");
+  box.innerHTML = "";
+  for (const p of pending) {
+    const el = document.createElement("div");
+    if (p.kind === "image" && p.dataUrl) {
+      el.className = "thumb";
+      el.innerHTML = `<img src="${p.dataUrl}" alt="${esc(p.name)}"><button aria-label="Remove">✕</button>`;
+    } else {
+      el.className = "chip";
+      el.innerHTML = `${p.kind === "image" ? "🖼" : "📄"} ${esc(p.name)}${p.status === "reading" ? " · reading…" : ""}<button aria-label="Remove">✕</button>`;
+    }
+    el.querySelector("button").onclick = () => { pending = pending.filter((x) => x !== p); renderPending(); };
+    box.appendChild(el);
+  }
+  updateSend();
+}
+
+$("#attach").onclick = () => $("#file").click();
+$("#file").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
+const comp = $("#composer");
+["dragenter", "dragover"].forEach((t) => document.addEventListener(t, (e) => { e.preventDefault(); comp.classList.add("drag"); }));
+["dragleave", "drop"].forEach((t) => document.addEventListener(t, (e) => { e.preventDefault(); if (t === "drop" || !e.relatedTarget) comp.classList.remove("drag"); }));
+document.addEventListener("drop", (e) => { if (e.dataTransfer?.files?.length) addFiles([...e.dataTransfer.files]); });
+$("#input").addEventListener("paste", (e) => {
+  const files = [...(e.clipboardData?.files || [])];
+  if (files.length) { e.preventDefault(); addFiles(files); }
+});
+
+// ── sending ────────────────────────────────────────────────────────
+let busy = null; // AbortController while a reply streams
+
+function grow() { const t = $("#input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 220) + "px"; updateSend(); }
+function updateSend() {
+  const b = $("#send");
+  if (busy) { b.disabled = false; b.title = "Stop"; b.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>'; return; }
+  b.title = "Send";
+  b.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  b.disabled = !$("#input").value.trim() && !pending.some((p) => p.status === "ready") || pending.some((p) => p.status === "reading");
+}
+$("#input").addEventListener("input", grow);
+$("#input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!$("#send").disabled && !busy) send(); }
+});
+$("#send").onclick = () => (busy ? busy.abort() : send());
+
+/** Chat history in the format the API expects. */
+function apiMessages() {
+  return current.messages.filter((m) => !m.error || m.text).map((m) => {
+    if (m.role === "assistant") return { role: "assistant", content: splitThink(m.text).answer };
+    const text = (m.text || "") + (m.fileText ? "\n\n" + m.fileText : "");
+    if (!(m.images || []).length) return { role: "user", content: text };
+    return { role: "user", content: [{ type: "text", text: text || "Describe this image." }, ...m.images.map((url) => ({ type: "image_url", image_url: { url } }))] };
+  });
+}
+
+async function send() {
+  const text = $("#input").value.trim();
+  const ready = pending.filter((p) => p.status === "ready");
+  if (!text && !ready.length) return;
+  if (!S?.gatewayUp) { toast("OmniRoute is not running. Restart the computer or run the installer again."); return; }
+  if (!S.providers?.nvidia && !S.providers?.kiro) { openSettings("keys"); return; }
+  if (!current) newChat();
+  const files = ready.filter((p) => p.kind === "file");
+  const images = ready.filter((p) => p.kind === "image").map((p) => p.dataUrl);
+  const msg = {
+    role: "user", text, images,
+    files: files.map((f) => ({ name: f.name })),
+    fileText: files.map((f) => `--- File: ${f.name} ---\n${f.text}\n--- End of ${f.name} ---`).join("\n\n"),
+  };
+  if (!chats.includes(current)) chats.unshift(current);
+  if (current.title === "New chat") current.title = (text || files[0]?.name || "Image").slice(0, 60);
+  current.messages.push(msg);
+  $("#input").value = ""; pending = []; grow(); renderPending();
+  await stream();
+}
+
+async function retry() {
+  if (busy) return;
+  const last = current.messages[current.messages.length - 1];
+  if (last?.role === "assistant") current.messages.pop();
+  await stream();
+}
+
+async function stream() {
+  const reply = { role: "assistant", text: "", reasoning: "", streaming: true };
+  current.messages.push(reply);
+  renderAll(); save();
+  const node = () => $("#thread").lastElementChild;
+  busy = new AbortController(); updateSend();
+  const paint = () => { const fresh = renderMessage(reply, current.messages.length - 1); node()?.replaceWith(fresh); scrollDown(); };
+  let pendingPaint = false;
+  const schedule = () => { if (!pendingPaint) { pendingPaint = true; requestAnimationFrame(() => { pendingPaint = false; paint(); }); } };
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-omni-chat": "1" },
+      body: JSON.stringify({ model: $("#model").value, messages: apiMessages().slice(0, -1) }),
+      signal: busy.signal,
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(friendly(d.error || `HTTP ${r.status}`, r.status));
+    }
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (data === "[DONE]") continue;
+        let j; try { j = JSON.parse(data); } catch { continue; }
+        if (j.error) throw new Error(friendly(j.error.message || JSON.stringify(j.error)));
+        const d = j.choices?.[0]?.delta || {};
+        if (d.content) reply.text += d.content;
+        if (d.reasoning_content || d.reasoning) reply.reasoning += d.reasoning_content || d.reasoning;
+        if (j.model) reply.model = j.model;
+        if (j.usage) reply.usage = j.usage;
+        schedule();
+      }
+    }
+    if (!reply.text && !reply.reasoning) throw new Error("The model sent an empty answer. Press Retry, or pick another model.");
+  } catch (e) {
+    if (e.name === "AbortError") reply.error = reply.text ? "" : "Stopped.";
+    else reply.error = e.message;
+  } finally {
+    reply.streaming = false; busy = null; updateSend();
+    paint(); save(); renderList();
+    refreshState();
+  }
+}
+
+function friendly(msg, status) {
+  if (status === 429 || /rate limit|429/i.test(msg)) return msg.includes("Daily limit") ? msg : "Too many requests right now (free limit). Wait a minute and press Retry.";
+  if (/context|too long|exceeds/i.test(msg)) return "This chat is too long for the model. Start a new chat, or attach a shorter file.";
+  if (/image|vision|multimodal/i.test(msg)) return "This model cannot read images. Choose 'Auto · for images' and press Retry.";
+  return msg;
+}
+
+// ── settings ───────────────────────────────────────────────────────
+let tab = "keys";
+function openSettings(which) {
+  if (which) tab = which;
+  $("#overlay").classList.add("open");
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+  renderPane();
+}
+function closeSettings() { $("#overlay").classList.remove("open"); kiroCancel = true; }
+$("#openSettings").onclick = () => openSettings();
+$("#overlay").onclick = (e) => { if (e.target.id === "overlay") closeSettings(); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSettings(); });
+document.querySelectorAll("#tabs button").forEach((b) => (b.onclick = () => openSettings(b.dataset.tab)));
+
+const PANES = {
+  keys() {
+    const nv = S?.providers?.nvidia, kiro = S?.providers?.kiro;
+    return `<h2>Keys and providers</h2><p class="sub">OmniRoute sends your chats to free AI providers. NVIDIA is required. Kiro is optional.</p>
+    <div class="card"><div class="card-head"><b>NVIDIA NIM</b><span class="badge ${nv ? "on" : ""}">${nv ? "Connected" : "Not connected"}</span></div>
+      <div class="note">Free. No token cap; about 40 requests per minute. ${nv && S.nvidiaKeyHint ? `Key: ${esc(S.nvidiaKeyHint)}` : ""}</div>
+      <ol class="steps"><li>Open <a href="https://build.nvidia.com" target="_blank" rel="noopener">build.nvidia.com</a> and sign in (or create a free account).</li>
+      <li>Open your profile menu → <b>API Keys</b>, or open any model and click <b>Get API Key</b>.</li>
+      <li>Click <b>Generate Key</b>, copy it (it starts with <code>nvapi-</code>) and paste it here.</li></ol>
+      <div class="inline"><input class="input" id="nvKey" type="password" placeholder="nvapi-…" autocomplete="off">
+      <button class="btn" id="nvSave">${nv ? "Replace" : "Connect"}</button></div><div class="note" id="nvNote"></div></div>
+    <div class="card"><div class="card-head"><b>Kiro (optional)</b><span class="badge ${kiro ? "on" : ""}">${kiro ? "Connected" : "Not connected"}</span></div>
+      <div class="note">Adds Claude Sonnet 4.5 and more. Free: 50 credits per month, then OmniRoute falls back to NVIDIA.</div>
+      ${kiro ? "" : `<div class="inline" style="margin-top:10px"><button class="btn light" data-social="github">Sign in with GitHub</button><button class="btn light" data-social="google">Sign in with Google</button></div>`}
+      <div id="kiroBox" class="note"></div></div>
+    <div class="note">Advanced settings: <a href="${esc(S?.dashboard || "#")}" target="_blank" rel="noopener">OmniRoute dashboard</a></div>`;
+  },
+  limits() {
+    const u = S?.usage || {}, lim = S?.settings?.dailyTokenLimit || 0;
+    const kiro = u.kiro?.total ? `${u.kiro.remaining.toFixed(2)} of ${u.kiro.total}` : u.kiro ? "syncing" : "not connected";
+    return `<h2>Usage and limits</h2><p class="sub">Numbers for this computer, from OmniRoute.</p>
+    <div class="stats">
+      <div class="stat"><b>${fmt(u.today?.tokens)}</b><span>tokens today · ${u.today?.requests || 0} requests</span></div>
+      <div class="stat"><b>${fmt(u.month?.tokens)}</b><span>tokens this month · ${u.month?.requests || 0} requests</span></div>
+      <div class="stat"><b>${kiro}</b><span>Kiro credits left this month${u.kiro?.resetAt ? ` · resets ${new Date(u.kiro.resetAt).toLocaleDateString()}` : ""}</span></div>
+      <div class="stat"><b>~${u.nvidia?.rpm || 40}/min</b><span>NVIDIA request limit · no token cap</span></div>
+    </div>
+    <div class="field"><label for="limit">My daily token limit</label>
+      <div class="inline"><input class="input" id="limit" type="number" min="0" step="10000" value="${lim}"><button class="btn" id="limitSave">Save</button></div>
+      <small>0 = no limit. When today's total reaches this number, the chat stops sending until tomorrow.</small></div>
+    <div class="note">Full history: <a href="${esc(S?.dashboard || "#")}" target="_blank" rel="noopener">OmniRoute dashboard</a> → Usage.</div>`;
+  },
+  models() {
+    const li = (m, list, i) => `<li class="${m.available ? "" : "off"}" title="${m.available ? "" : "Provider not connected"}"><span>${i + 1}. ${esc(m.model)} <small class="note">(${esc(m.providerId)})</small></span>
+      <button data-list="${list}" data-i="${i}" data-a="up" aria-label="Move up">↑</button><button data-list="${list}" data-i="${i}" data-a="down" aria-label="Move down">↓</button><button data-list="${list}" data-i="${i}" data-a="del" aria-label="Remove">✕</button></li>`;
+    return `<h2>Models</h2><p class="sub">"Auto" tries these in order and moves to the next one when a model is busy, fails or runs out of free use.</p>
+    <div class="field"><label>Auto · best free model</label><ul class="chain">${draft.default.map((m, i) => li(m, "default", i)).join("")}</ul></div>
+    <div class="field"><label>Auto · for images</label><ul class="chain">${draft.vision.map((m, i) => li(m, "vision", i)).join("")}</ul></div>
+    <div class="field"><label for="addModel">Add an NVIDIA model</label>
+      <div class="inline"><input class="input" id="addModel" list="catalog" placeholder="for example moonshotai/kimi-k3"><datalist id="catalog"></datalist>
+      <select class="input" id="addTo" style="width:auto"><option value="default">to Auto</option><option value="vision">to Images</option></select>
+      <button class="btn light" id="addBtn">Add</button></div><small>Not every listed model is free for every account. If a model fails, Auto skips it.</small></div>
+    <div class="inline"><button class="btn" id="routeSave">Save order</button><button class="btn light" id="routeReset">Reset to recommended</button></div>
+    <div class="note" id="routeNote"></div>`;
+  },
+  general() {
+    return `<h2>General</h2><p class="sub">These settings apply to every chat in this app.</p>
+    <div class="field"><label for="sys">Instructions for the AI (optional)</label>
+      <textarea class="input" id="sys" rows="5" placeholder="For example: Answer in simple English. Use short paragraphs.">${esc(S?.settings?.systemPrompt || "")}</textarea>
+      <button class="btn" id="sysSave" style="justify-self:start">Save</button></div>
+    <div class="field"><label>Saved chats</label><small>Chats are saved in this browser only. Nothing is uploaded except to the AI provider you chat with.</small>
+      <button class="btn light" id="wipe" style="justify-self:start">Delete all chats</button></div>
+    <div class="note">Developers: Claude Code and the <code>claude-omni</code> command keep working. Use <code>/omni free</code> and <code>/omni paid</code> in Claude Code.</div>`;
+  },
+};
+
+let draft = { default: [], vision: [] };
+let kiroCancel = false;
+
+function renderPane() {
+  if (tab === "models" && !renderPane.drafted) {
+    draft = { default: (S?.chains?.default || []).map((m) => ({ ...m })), vision: (S?.chains?.vision || []).map((m) => ({ ...m })) };
+    renderPane.drafted = true;
+  }
+  if (tab !== "models") renderPane.drafted = false;
+  const pane = $("#pane");
+  pane.innerHTML = `<button class="close" aria-label="Close">✕</button>` + PANES[tab]();
+  pane.querySelector(".close").onclick = closeSettings;
+  wire[tab]?.(pane);
+}
+
+const wire = {
+  keys(p) {
+    $("#nvSave", p).onclick = async () => {
+      const note = $("#nvNote", p), btn = $("#nvSave", p);
+      btn.disabled = true; note.className = "note"; note.textContent = "Checking the key with NVIDIA…";
+      try {
+        await call("/api/nvidia-key", { key: $("#nvKey", p).value });
+        note.className = "note ok"; note.textContent = "Connected.";
+        await refreshState(); setTimeout(renderPane, 800);
+      } catch (e) { note.className = "note err"; note.textContent = e.message; }
+      btn.disabled = false;
+    };
+    p.querySelectorAll("[data-social]").forEach((b) => (b.onclick = () => kiroLogin(b.dataset.social)));
+  },
+  limits(p) {
+    $("#limitSave", p).onclick = async () => {
+      await call("/api/settings", { dailyTokenLimit: Number($("#limit", p).value) });
+      await refreshState(); toast("Daily limit saved");
+    };
+  },
+  models(p) {
+    p.querySelectorAll("[data-a]").forEach((b) => (b.onclick = () => {
+      const list = draft[b.dataset.list], i = Number(b.dataset.i);
+      if (b.dataset.a === "del") list.splice(i, 1);
+      if (b.dataset.a === "up" && i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]];
+      if (b.dataset.a === "down" && i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]];
+      renderPane();
+    }));
+    call("/api/catalog", {}).then((c) => { const dl = $("#catalog", p); if (dl) dl.innerHTML = c.nvidia.map((id) => `<option value="${esc(id)}">`).join(""); }).catch(() => {});
+    $("#addBtn", p).onclick = () => {
+      const id = $("#addModel", p).value.trim();
+      if (!id) return;
+      draft[$("#addTo", p).value].push({ model: id, providerId: "nvidia", available: !!S?.providers?.nvidia });
+      renderPane();
+    };
+    const done = async (body) => {
+      const note = $("#routeNote", p); note.className = "note"; note.textContent = "Saving…";
+      try { await call("/api/routing", body); renderPane.drafted = false; await refreshState(); renderPane(); toast("Model order saved"); }
+      catch (e) { note.className = "note err"; note.textContent = e.message; }
+    };
+    $("#routeSave", p).onclick = () => {
+      if (!draft.default.length) { toast("Keep at least one model in Auto"); return; }
+      done({ default: draft.default.map(({ model, providerId }) => ({ model, providerId })), vision: draft.vision.map(({ model, providerId }) => ({ model, providerId })) });
+    };
+    $("#routeReset", p).onclick = () => done({ reset: true });
+  },
+  general(p) {
+    $("#sysSave", p).onclick = async () => { await call("/api/settings", { systemPrompt: $("#sys", p).value }); await refreshState(); toast("Saved"); };
+    $("#wipe", p).onclick = () => { if (confirm("Delete all saved chats in this browser?")) { chats = []; save(); newChat(); toast("All chats deleted"); } };
+  },
+};
+
+async function kiroLogin(social) {
+  const box = $("#kiroBox");
+  kiroCancel = false;
+  try {
+    box.textContent = "Starting…";
+    const s = await call("/api/kiro/start", { social });
+    window.open(s.authUrl, "_blank", "noopener");
+    box.innerHTML = `A browser tab opened. Sign in, then enter this code if asked: <div class="code">${esc(s.userCode)}</div>
+      <div>If no tab opened: <a href="${esc(s.authUrl)}" target="_blank" rel="noopener">open the sign-in page</a>. Waiting…</div>`;
+    const end = Date.now() + (s.expiresIn || 300) * 1000;
+    while (Date.now() < end && !kiroCancel) {
+      await new Promise((r) => setTimeout(r, Math.max((s.interval || 5) * 1000, 3000)));
+      const r = await call("/api/kiro/poll", { deviceCode: s.deviceCode, social });
+      if (r.status === "connected") { toast("Kiro connected"); await refreshState(); renderPane(); return; }
+    }
+    if (!kiroCancel) box.textContent = "Time ran out. Try again.";
+  } catch (e) { box.innerHTML = `<span class="note err">${esc(e.message)}</span>`; }
+}
+
+// ── start ──────────────────────────────────────────────────────────
+$("#newChat").onclick = newChat;
+$("#menu").onclick = () => $("#side").classList.toggle("open");
+newChat();
+refreshState().then((s) => { if (s.gatewayUp && !s.providers?.nvidia && !s.providers?.kiro) openSettings("keys"); });
+setInterval(refreshState, 60000);
+</script>
+</body>
+</html>

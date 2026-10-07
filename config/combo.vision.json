@@ -1,0 +1,11 @@
+{
+  "_comment": "Used by OmniRoute Chat when a message has images. Models must accept images.",
+  "name": "vision",
+  "strategy": "priority",
+  "models": [
+    { "model": "kiro/claude-sonnet-4.5", "providerId": "kiro" },
+    { "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "providerId": "nvidia" },
+    { "model": "meta/llama-3.2-11b-vision-instruct", "providerId": "nvidia" },
+    { "model": "meta/llama-3.2-90b-vision-instruct", "providerId": "nvidia" }
+  ]
+}
