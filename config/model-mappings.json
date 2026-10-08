@@ -1,5 +1,5 @@
 {
-  "_comment": "Requests for these model names go to the combo below. Claude Code sends real Claude model ids (for example claude-opus-5-5) when a chat switches mode mid-session; without this OmniRoute answers 400.",
+  "_comment": "Requests for these model names go to the combo below. 'free-chain' is the model free mode asks for: Claude Code reads 'default' as an alias for the plan's default model, so it cannot be used there. The Claude patterns catch real Claude model ids (for example claude-opus-5-5), which Claude Code sends when a chat switches mode mid-session; without them OmniRoute answers 400.",
   "combo": "default",
-  "patterns": ["claude-*", "anthropic/*"]
+  "patterns": ["free-chain", "claude-*", "anthropic/*"]
 }

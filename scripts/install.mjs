@@ -20,6 +20,7 @@ import {
 import { applyConfig } from "./apply-config.mjs";
 import { kiroLogin, openBrowser } from "./kiro-login.mjs";
 import { nvidiaKeyWorks, connectNvidia } from "./lib/providers.mjs";
+import { installShortcuts, KEYS_HINT } from "./lib/editor-shortcuts.mjs";
 
 const args = new Set(process.argv.slice(2));
 const YES = args.has("--yes") || args.has("-y");
@@ -303,6 +304,7 @@ async function claudeIntegration() {
   setStatusLine(join(CLAUDE_DIR, "settings.json"));
   writeProfile();
   installCommands();
+  installShortcuts({ ok, warn });
   if (spawnSync(IS_WIN ? "where" : "which", ["claude"], { encoding: "utf8" }).status !== 0) {
     warn("the claude command is not installed. The VS Code extension works without it.");
     console.log(IS_WIN ? "    CLI install:  irm https://claude.ai/install.ps1 | iex" : "    CLI install:  curl -fsSL https://claude.ai/install.sh | bash");
@@ -427,6 +429,9 @@ ${B("Done.")}
     /omni paid     go back to your paid Claude
     /omni usage    tokens used and free allowance left
   After /omni free or /omni paid, reload the VS Code window.
+  Paid plan used up? /omni needs Claude to answer, so use the
+  shortcuts instead: ${KEYS_HINT}
+  Start a new conversation (/clear) after switching to free.
   Terminal: claude-omni (free)  |  claude (paid, unchanged)
 
   Dashboard (advanced): ${base}

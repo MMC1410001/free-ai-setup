@@ -9,6 +9,7 @@ import { existsSync, readdirSync, rmSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { ROOT, IS_WIN, IS_MAC, HOME, CLAUDE_DIR, STATE_DIR, readJson, writeJson, loadEnv } from "./lib/common.mjs";
+import { removeShortcuts } from "./lib/editor-shortcuts.mjs";
 
 loadEnv();
 const ok = (s) => console.log(`  ✓ ${s}`);
@@ -38,14 +39,17 @@ for (const f of [join(CLAUDE_DIR, "settings.json")]) {
 rmSync(join(CLAUDE_DIR, "profiles", "omniroute"), { recursive: true, force: true });
 ok("removed the claude-omni profile");
 
-// 3. Commands.
+// 3. Editor switch shortcuts.
+removeShortcuts({ ok });
+
+// 4. Commands.
 const bin = join(HOME, ".local", "bin");
 for (const n of IS_WIN ? ["claude-omni.cmd", "omniroute.cmd"] : ["claude-omni", "omniroute"]) {
   try { unlinkSync(join(bin, n)); } catch { /* not there */ }
 }
 ok("removed the claude-omni and omniroute commands");
 
-// 4. Chat app shortcuts.
+// 5. Chat app shortcuts.
 const { rmSync: rm } = await import("node:fs");
 if (IS_MAC) {
   rm(join(HOME, "Applications", "OmniRoute Chat.app"), { recursive: true, force: true });
@@ -59,7 +63,7 @@ if (IS_MAC) {
 try { unlinkSync(join(bin, IS_WIN ? "omni-chat.cmd" : "omni-chat")); } catch { /* none */ }
 ok("removed the OmniRoute Chat app shortcuts");
 
-// 5. Autostart, then stop the server.
+// 6. Autostart, then stop the server.
 if (IS_WIN) {
   spawnSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", join(ROOT, "scripts", "autostart-windows.ps1"), "uninstall"], { stdio: "inherit" });
 } else {

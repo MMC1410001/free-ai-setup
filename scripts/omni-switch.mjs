@@ -4,9 +4,10 @@
  *
  *   node omni-switch.mjs [status|free|paid|toggle|usage|help] [--dir <project>]
  *
- * Free mode adds OmniRoute env keys to <project>/.claude/settings.local.json.
+ * Free mode adds OmniRoute keys to <project>/.claude/settings.local.json.
  * Paid mode removes only those keys and restores any values they replaced,
  * so permissions and other settings in that file are kept.
+ * Running free again refreshes the keys, for projects switched by an older version.
  */
 import { existsSync, readFileSync, writeFileSync, unlinkSync, appendFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -40,17 +41,41 @@ const RELOAD = `
  normal: the switch is already done.
 -----------------------------------------------------------------`;
 
+const NEW_CHAT = `
+ Free models hold at most 128K tokens, so start a NEW conversation
+ (/clear). A long paid conversation is too big for them, even to compact.`;
+
+// Model name OmniRoute maps to the free chain (config/model-mappings.json).
+// Not "default": Claude Code reads that as an alias for the plan's default
+// model and sends a Claude id instead.
+const FREE_MODEL = "free-chain";
+
 function ourEnv() {
   return {
     ANTHROPIC_BASE_URL: base,
     ANTHROPIC_AUTH_TOKEN: chatKey(),
-    ANTHROPIC_MODEL: "default",
+    ANTHROPIC_MODEL: FREE_MODEL,
     CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: "1",
-    // Smaller than the 128k window of the NVIDIA fallback models, so a long
-    // chat is compacted before a fallback model rejects it.
-    CLAUDE_CODE_AUTO_COMPACT_WINDOW: "110000",
+    // Compact at 100k (the lowest Claude Code allows), under the 128k window
+    // of the NVIDIA fallback models, so a long chat is compacted before a
+    // fallback model rejects it.
+    CLAUDE_CODE_AUTO_COMPACT_WINDOW: "100000",
   };
 }
+
+/** Top-level keys free mode sets next to env. */
+function ourTop() {
+  return {
+    // The VS Code extension passes --model from this setting, so without it
+    // the paid model (for example opus) is sent to OmniRoute.
+    model: FREE_MODEL,
+    // claude.ai connector tool definitions alone take about 40k tokens.
+    disableClaudeAiConnectors: true,
+  };
+}
+
+/** Current values of the keys we are about to set (null = not set). */
+const snapshot = (obj, keys) => Object.fromEntries(keys.map((k) => [k, obj && k in obj ? obj[k] : null]));
 
 function readSettings() {
   if (!existsSync(FILE)) return {};
@@ -78,25 +103,30 @@ function keepOutOfGit() {
 
 async function toFree() {
   const s = readSettings();
-  if (isFree(s)) return console.log(`Already FREE (OmniRoute) in ${dir}`);
+  const wasFree = isFree(s);
   if (!chatKey()) {
     console.error("✖ OMNIROUTE_API_KEY is missing. Run the installer again.");
     process.exit(1);
   }
-  const env = s.env || {};
-  const saved = {};
-  for (const [k, v] of Object.entries(ourEnv())) {
-    saved[k] = k in env ? env[k] : null;
-    env[k] = v;
-  }
-  writeJson(STATE, { dir, saved, fileExisted: existsSync(FILE) });
+  // Save the values we replace once, on the first switch. A refresh keeps that
+  // save, adding the top-level keys if an older version did not record them.
+  const state = wasFree ? readJson(STATE, { dir, saved: {}, fileExisted: true }) : {
+    dir,
+    saved: snapshot(s.env, Object.keys(ourEnv())),
+    fileExisted: existsSync(FILE),
+  };
+  state.savedTop ??= snapshot(s, Object.keys(ourTop()));
+  writeJson(STATE, state);
   ensureDir(join(dir, ".claude"));
-  writeFileSync(FILE, JSON.stringify({ ...s, env }, null, 2) + "\n", { mode: 0o600 });
+  const next = { ...s, ...ourTop(), env: { ...(s.env || {}), ...ourEnv() } };
+  writeFileSync(FILE, JSON.stringify(next, null, 2) + "\n", { mode: 0o600 });
   keepOutOfGit();
+  if (wasFree) return console.log(`Already FREE (OmniRoute), settings refreshed in ${dir}`);
   console.log(`✓ FREE (OmniRoute) in ${dir}`);
   if (!(await isUp())) {
     console.log(`\n! OmniRoute is not running at ${base}. Start it with:\n    omniroute serve --no-tray --no-open --daemon`);
   }
+  console.log(NEW_CHAT);
   console.log(RELOAD);
 }
 
@@ -111,6 +141,11 @@ function toPaid() {
     else env[k] = prev;
   }
   const next = { ...s, env };
+  for (const k of Object.keys(ourTop())) {
+    const prev = state.savedTop?.[k];
+    if (prev === undefined || prev === null) delete next[k];
+    else next[k] = prev;
+  }
   if (!Object.keys(env).length) delete next.env;
   if (!Object.keys(next).length && state.fileExisted === false) unlinkSync(FILE);
   else writeFileSync(FILE, JSON.stringify(next, null, 2) + "\n", { mode: 0o600 });

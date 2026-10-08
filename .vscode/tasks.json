@@ -13,6 +13,9 @@
         "panel": "shared",
         "showReuseMessage": false,
         "clear": true
+      },
+      "windows": {
+        "command": "node scripts/omni-switch.mjs paid"
       }
     },
     {
@@ -27,6 +30,9 @@
         "panel": "shared",
         "showReuseMessage": false,
         "clear": true
+      },
+      "windows": {
+        "command": "node scripts/omni-switch.mjs free"
       }
     },
     {

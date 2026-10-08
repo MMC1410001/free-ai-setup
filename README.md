@@ -77,7 +77,24 @@ In any project, in the VS Code chat or the terminal:
 
 After `/omni free` or `/omni paid`, reload the VS Code window (**Cmd/Ctrl+Shift+P → Developer: Reload Window**). The first message before the reload can show an error; the switch is already done.
 
-`/omni free` adds OmniRoute keys to `.claude/settings.local.json` in that project and adds that file to `.gitignore`. `/omni paid` removes only those keys, so your permissions and other settings stay.
+**Start a new conversation after switching to free** (`/clear`). The free models hold at most 128K tokens, so a long paid conversation is too big for them, even to compact.
+
+**Paid plan used up?** `/omni` needs Claude to answer, so it cannot run once your paid usage is gone. Use the keyboard shortcuts instead. The installer adds them to VS Code, Cursor, Kiro, Antigravity and Windsurf; they work in any project and switch and reload in one step:
+
+| | macOS | Windows / Linux |
+| --- | --- | --- |
+| Switch to free | `Ctrl+Option+Cmd+F` | `Ctrl+Alt+Shift+F` |
+| Switch to paid | `Ctrl+Option+Cmd+P` | `Ctrl+Alt+Shift+P` |
+
+No shortcut? **Cmd/Ctrl+Shift+P → Tasks: Run Task → OmniRoute: switch to FREE**. Windows does not reload by itself; reload the window after the switch.
+
+`/omni free` adds OmniRoute keys to `.claude/settings.local.json` in that project and adds that file to `.gitignore`. `/omni paid` removes only those keys and puts back the values they replaced, so your permissions, your paid model and other settings stay. Running `/omni free` again refreshes the keys.
+
+Free mode sets three things besides the gateway address and key:
+
+- **Model `free-chain`.** The VS Code extension sends the `model` from your settings, so without this the paid model (for example Opus) would go to OmniRoute. It is not called `default`: Claude Code reads that as an alias for your plan's default model.
+- **Compaction at 100K tokens**, under the 128K window of the NVIDIA models.
+- **claude.ai connectors off** (Slack, Notion and so on). Their tool definitions alone take about 40K tokens.
 
 Terminal: `claude-omni` runs Claude Code through OmniRoute with its own profile. `claude` is your normal paid Claude Code, unchanged.
 
@@ -107,7 +124,8 @@ claude-omni ────┘         combo "default" (text) / "vision" (images), 
 
 - Everything runs on your computer and listens on 127.0.0.1 only.
 - The installer keeps all files in `~/.free-ai-setup` (Windows: `%USERPROFILE%\.free-ai-setup`), including `.env` with your keys. OmniRoute's data is in `~/.omniroute`.
-- Claude Code sends real Claude model names (for example `claude-opus-5-5`). OmniRoute maps `claude-*` to the `default` combo, so switching mode in the middle of a chat does not fail with "Unable to determine provider".
+- Free mode asks for the model `free-chain`, which OmniRoute maps to the `default` combo.
+- Claude Code sends real Claude model names (for example `claude-opus-5-5`) when a chat switches mode midway. OmniRoute maps `claude-*` to the `default` combo too, so that does not fail with "Unable to determine provider".
 
 ## What's in here
 
@@ -118,13 +136,14 @@ claude-omni ────┘         combo "default" (text) / "vision" (images), 
 | `scripts/install.mjs` | The installer (all platforms) |
 | `scripts/uninstall.mjs` | Undo the installer |
 | `scripts/omni-switch.mjs` | `/omni` logic: status, free, paid, toggle, usage |
+| `scripts/lib/editor-shortcuts.mjs` | Adds and removes the paid/free keyboard shortcuts in VS Code-family editors |
 | `skill/SKILL.md.tmpl` | The global `/omni` skill (installed to `~/.claude/skills/omni`) |
 | `scripts/statusline.mjs` | Claude Code status line with token use |
 | `scripts/chat-server.mjs`, `ui/` | OmniRoute Chat (server and page) |
 | `scripts/chat-launch.mjs` | Starts what is needed and opens the chat window |
 | `scripts/apply-config.mjs` | Applies `config/` to OmniRoute (idempotent) |
 | `config/combo.default.json`, `config/combo.vision.json` | Model order for text and for images |
-| `config/model-mappings.json` | Model names that go to the `default` combo |
+| `config/model-mappings.json` | Model names that go to the `default` combo (`free-chain`, `claude-*`) |
 | `config/settings.json` | Free-only lock |
 | `scripts/kiro-login.mjs` | Kiro browser login (the built-in CLI command is broken in 3.8.51) |
 | `scripts/autostart-*.{sh,ps1}` | Start OmniRoute at login (launchd, Scheduled Task, systemd) |
@@ -146,7 +165,7 @@ bash ~/.free-ai-setup/install.sh --uninstall                              # macO
 powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.free-ai-setup\install.ps1" --uninstall   # Windows
 ```
 
-This puts every project back to paid mode and removes `/omni`, the status line, the `claude-omni` profile, the commands, the chat shortcuts and autostart. It keeps `~/.free-ai-setup` (with `.env`) and `~/.omniroute` (OmniRoute data) so you can delete them yourself.
+This puts every project back to paid mode and removes `/omni`, the status line, the `claude-omni` profile, the editor switch shortcuts, the commands, the chat shortcuts and autostart. It keeps `~/.free-ai-setup` (with `.env`) and `~/.omniroute` (OmniRoute data) so you can delete them yourself.
 
 ---
 
@@ -160,6 +179,8 @@ This puts every project back to paid mode and removes `/omni`, the status line, 
 | A PDF gives no text | It is a scan. Send pages as images instead. |
 | `/omni` not found in Claude Code | Run the installer again, then restart VS Code. On Windows, restart VS Code after Node.js is installed so `node` is on PATH. |
 | 400 "Unable to determine provider for model 'claude-…'" | Run the installer again (it adds the `claude-*` mapping). |
+| Free mode still shows Opus, or 400 "Ambiguous model 'claude-opus-5'" | The project was switched by an older version. Run `/omni free` again (or the shortcut), then reload the window. Run the installer again if OmniRoute does not know `free-chain`. |
+| "Input exceeds context window … limit 128000" / "automatic compaction failed" | The conversation is bigger than the free models can take, often because it grew on paid first. Start a new conversation (`/clear`). |
 | `providers auth kiro` → 405 | Upstream bug in 3.8.51. Use Settings → Kiro in the chat app, or `node scripts/kiro-login.mjs github`. |
 | `omniroute autostart enable` → job exits 1 | Upstream bugs (`--tray` without a GUI, bare `node` under launchd). The installer uses `scripts/autostart-mac.sh` instead. |
 | Provider added but unused | Connections start inactive: `omniroute providers edit "<name>" --active`. |
