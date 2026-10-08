@@ -1,0 +1,101 @@
+<!doctype html>
+<!-- Source of the guide figure. Render: Chrome --headless=new --force-device-scale-factor=2 --window-size=1400,760 --screenshot=architecture.png architecture.html -->
+<html><head><meta charset="utf-8"><style>
+  html,body{margin:0;background:#fff;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+  text{font-family:inherit}
+  .t{font-size:17px;font-weight:700;fill:#1f2328}
+  .s{font-size:13.5px;fill:#4a4f57}
+  .c{font-size:12.5px;fill:#4a4f57;font-family:Menlo,Consolas,monospace}
+  .lbl{font-size:13px;font-weight:600;fill:#0F766E}
+  .zone{font-size:14px;font-weight:700;fill:#6B6F76;letter-spacing:.06em}
+</style></head><body>
+<svg width="1400" height="760" viewBox="0 0 1400 760" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8a8f98"/></marker>
+  </defs>
+
+  <!-- zones -->
+  <rect x="20" y="20" width="900" height="600" rx="16" fill="#FAFAF7" stroke="#C9C8C2" stroke-dasharray="6 5"/>
+  <text x="44" y="52" class="zone">YOUR COMPUTER (127.0.0.1 only)</text>
+  <rect x="960" y="20" width="420" height="600" rx="16" fill="#FAFAF7" stroke="#C9C8C2" stroke-dasharray="6 5"/>
+  <text x="984" y="52" class="zone">INTERNET · FREE PROVIDERS</text>
+
+  <!-- clients -->
+  <g>
+    <rect x="50" y="80" width="300" height="110" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <text x="70" y="113" class="t">OmniRoute Chat</text>
+    <text x="70" y="138" class="s">Chat app for everyone. Files, images,</text>
+    <text x="70" y="158" class="s">usage and daily limit.</text>
+    <text x="70" y="178" class="c">127.0.0.1:21128</text>
+  </g>
+  <g>
+    <rect x="50" y="215" width="300" height="130" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <text x="70" y="248" class="t">Claude Code, free mode</text>
+    <text x="70" y="273" class="s">VS Code chat or terminal, per project.</text>
+    <text x="70" y="293" class="s">Switch: /omni free or the shortcut.</text>
+    <text x="70" y="315" class="c">model: free-chain</text>
+    <text x="70" y="333" class="c">compact at 100K tokens</text>
+  </g>
+  <g>
+    <rect x="50" y="370" width="300" height="90" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <text x="70" y="403" class="t">claude-omni</text>
+    <text x="70" y="428" class="s">Terminal command with its own</text>
+    <text x="70" y="448" class="s">profile. Always free.</text>
+  </g>
+
+  <!-- gateway -->
+  <g>
+    <rect x="460" y="120" width="420" height="300" rx="14" fill="#E3F1EF" stroke="#0F766E" stroke-width="2"/>
+    <text x="485" y="158" class="t" style="font-size:20px">OmniRoute gateway</text>
+    <text x="485" y="182" class="c">127.0.0.1:20128 · open source (MIT)</text>
+    <rect x="485" y="202" width="370" height="92" rx="10" fill="#fff" stroke="#9cc9c2"/>
+    <text x="503" y="228" class="lbl">Model names → combo</text>
+    <text x="503" y="252" class="c">free-chain, claude-*  →  "default"</text>
+    <text x="503" y="276" class="c">images (chat app)     →  "vision"</text>
+    <rect x="485" y="308" width="370" height="92" rx="10" fill="#fff" stroke="#9cc9c2"/>
+    <text x="503" y="334" class="lbl">Free-only lock and auto-fallback</text>
+    <text x="503" y="358" class="s">Tries each model in order. Busy, failed or</text>
+    <text x="503" y="378" class="s">out of free use → next model. Counts tokens.</text>
+  </g>
+
+  <!-- client arrows -->
+  <path d="M350,135 C410,135 410,200 458,210" fill="none" stroke="#0F766E" stroke-width="2.2" marker-end="url(#a)"/>
+  <path d="M350,280 L458,280" fill="none" stroke="#0F766E" stroke-width="2.2" marker-end="url(#a)"/>
+  <path d="M350,415 C410,415 410,360 458,350" fill="none" stroke="#0F766E" stroke-width="2.2" marker-end="url(#a)"/>
+
+  <!-- providers -->
+  <g>
+    <rect x="1000" y="95" width="340" height="150" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <text x="1020" y="128" class="t">1 · Kiro (optional)</text>
+    <text x="1020" y="153" class="s">Claude Sonnet 4.5, Haiku 4.5,</text>
+    <text x="1020" y="173" class="s">Qwen3 Coder Next, GLM-5</text>
+    <text x="1020" y="200" class="lbl">50 credits per month</text>
+    <text x="1020" y="222" class="s">Sign in with GitHub or Google</text>
+  </g>
+  <g>
+    <rect x="1000" y="300" width="340" height="150" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <text x="1020" y="333" class="t">2 · NVIDIA NIM (required)</text>
+    <text x="1020" y="358" class="s">Nemotron, DeepSeek, GLM, Llama</text>
+    <text x="1020" y="378" class="s">vision and about 80 more models</text>
+    <text x="1020" y="405" class="lbl">No token cap · ~40 requests/min</text>
+    <text x="1020" y="427" class="s">Free key from build.nvidia.com</text>
+  </g>
+  <path d="M880,215 L998,175" fill="none" stroke="#0F766E" stroke-width="2.2" marker-end="url(#a)"/>
+  <text x="890" y="178" class="lbl" transform="rotate(-18 890 178)">first</text>
+  <path d="M880,330 L998,370" fill="none" stroke="#0F766E" stroke-width="2.2" marker-end="url(#a)"/>
+  <text x="895" y="372" class="lbl" transform="rotate(18 895 372)">then</text>
+  <path d="M1170,245 L1170,298" fill="none" stroke="#0F766E" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+  <text x="1182" y="277" class="s">Kiro credits used up → NVIDIA</text>
+
+  <!-- paid path -->
+  <rect x="20" y="650" width="1360" height="88" rx="12" fill="#fff" stroke="#C9C8C2" stroke-dasharray="4 4"/>
+  <text x="74" y="683" class="t">Paid mode (unchanged)</text>
+  <text x="74" y="710" class="s">Claude Code and the claude command talk to Anthropic directly with your paid plan. OmniRoute is not used.</text>
+  <text x="74" y="729" class="s">Switching a project to paid removes the free-mode settings and puts back your own model and settings.</text>
+  <path d="M50,300 L34,300 L34,646" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#g)"/>
+  <rect x="60" y="540" width="270" height="44" rx="8" fill="#FAFAF7"/>
+  <text x="62" y="558" class="s">Claude Code in a paid project</text>
+  <text x="62" y="577" class="s">goes straight to Anthropic ↓</text>
+</svg>
+</body></html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<!-- Source of the guide figure. Render: Chrome --headless=new --force-device-scale-factor=2 --window-size=1400,640 --screenshot=workflow.png workflow.html -->
+<html><head><meta charset="utf-8"><style>
+  html,body{margin:0;background:#fff;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+  text{font-family:inherit}
+  .t{font-size:16px;font-weight:700;fill:#1f2328}
+  .s{font-size:13px;fill:#4a4f57}
+  .c{font-size:12.5px;fill:#4a4f57;font-family:Menlo,Consolas,monospace}
+  .h{font-size:18px;font-weight:700}
+  .n{font-size:13px;font-weight:700;fill:#fff}
+</style></head><body>
+<svg width="1400" height="640" viewBox="0 0 1400 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker>
+    <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6B6F76"/></marker>
+  </defs>
+
+  <!-- FREE lane -->
+  <rect x="20" y="20" width="1360" height="290" rx="16" fill="#E3F1EF" stroke="#9cc9c2"/>
+  <text x="44" y="54" class="h" fill="#0F766E">Switch a project to FREE</text>
+
+  <g id="f1">
+    <rect x="44" y="78" width="250" height="200" rx="12" fill="#fff" stroke="#9cc9c2"/>
+    <circle cx="70" cy="104" r="14" fill="#0F766E"/><text x="65" y="109" class="n">1</text>
+    <text x="94" y="110" class="t">Start the switch</text>
+    <text x="62" y="140" class="s">Paid still works:</text>
+    <text x="62" y="160" class="c">/omni free</text>
+    <text x="62" y="190" class="s">Paid used up:</text>
+    <text x="62" y="210" class="c">Ctrl+Option+Cmd+F (Mac)</text>
+    <text x="62" y="230" class="c">Ctrl+Alt+Shift+F (Win)</text>
+    <text x="62" y="258" class="s">The shortcut needs no Claude.</text>
+  </g>
+  <g>
+    <rect x="334" y="78" width="270" height="200" rx="12" fill="#fff" stroke="#9cc9c2"/>
+    <circle cx="360" cy="104" r="14" fill="#0F766E"/><text x="355" y="109" class="n">2</text>
+    <text x="384" y="110" class="t">Settings are added</text>
+    <text x="352" y="140" class="c">.claude/settings.local.json</text>
+    <text x="352" y="166" class="s">+ OmniRoute address and key</text>
+    <text x="352" y="186" class="s">+ model free-chain</text>
+    <text x="352" y="206" class="s">+ compact at 100K, connectors off</text>
+    <text x="352" y="234" class="s">Your own values are saved.</text>
+    <text x="352" y="254" class="s">Permissions are not touched.</text>
+  </g>
+  <g>
+    <rect x="644" y="78" width="230" height="200" rx="12" fill="#fff" stroke="#9cc9c2"/>
+    <circle cx="670" cy="104" r="14" fill="#0F766E"/><text x="665" y="109" class="n">3</text>
+    <text x="694" y="110" class="t">Reload, then /clear</text>
+    <text x="662" y="140" class="s">Reload the window (the Mac</text>
+    <text x="662" y="160" class="s">shortcut does it for you).</text>
+    <text x="662" y="190" class="s">Start a new conversation:</text>
+    <text x="662" y="210" class="c">/clear</text>
+    <text x="662" y="238" class="s">Free models hold at most</text>
+    <text x="662" y="258" class="s">128K tokens.</text>
+  </g>
+  <g>
+    <rect x="914" y="78" width="442" height="200" rx="12" fill="#fff" stroke="#9cc9c2"/>
+    <circle cx="940" cy="104" r="14" fill="#0F766E"/><text x="935" y="109" class="n">4</text>
+    <text x="964" y="110" class="t">Each message goes through OmniRoute</text>
+    <rect x="934" y="132" width="120" height="48" rx="8" fill="#F2F1EC"/><text x="947" y="161" class="s">Claude Code</text>
+    <rect x="1084" y="132" width="110" height="48" rx="8" fill="#E3F1EF" stroke="#0F766E"/><text x="1098" y="161" class="s">OmniRoute</text>
+    <rect x="1224" y="122" width="112" height="36" rx="8" fill="#F2F1EC"/><text x="1252" y="145" class="s">1 · Kiro</text>
+    <rect x="1224" y="166" width="112" height="36" rx="8" fill="#F2F1EC"/><text x="1240" y="189" class="s">2 · NVIDIA</text>
+    <path d="M1054,156 L1082,156" stroke="#0F766E" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M1194,150 L1222,141" stroke="#0F766E" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M1194,162 L1222,182" stroke="#0F766E" stroke-width="2" marker-end="url(#a)"/>
+    <text x="934" y="226" class="s">The first free model that answers is used. Busy, failed</text>
+    <text x="934" y="246" class="s">or out of free use → OmniRoute tries the next one.</text>
+  </g>
+  <path d="M294,178 L332,178" stroke="#0F766E" stroke-width="2.4" marker-end="url(#a)"/>
+  <path d="M604,178 L642,178" stroke="#0F766E" stroke-width="2.4" marker-end="url(#a)"/>
+  <path d="M874,178 L912,178" stroke="#0F766E" stroke-width="2.4" marker-end="url(#a)"/>
+
+  <!-- PAID lane -->
+  <rect x="20" y="336" width="1360" height="284" rx="16" fill="#F2F1EC" stroke="#C9C8C2"/>
+  <text x="44" y="370" class="h" fill="#4a4f57">Switch a project back to PAID</text>
+  <g>
+    <rect x="44" y="394" width="250" height="196" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <circle cx="70" cy="420" r="14" fill="#6B6F76"/><text x="65" y="425" class="n">1</text>
+    <text x="94" y="426" class="t">Start the switch</text>
+    <text x="62" y="458" class="c">/omni paid</text>
+    <text x="62" y="488" class="s">or the shortcut:</text>
+    <text x="62" y="508" class="c">Ctrl+Option+Cmd+P (Mac)</text>
+    <text x="62" y="528" class="c">Ctrl+Alt+Shift+P (Win)</text>
+  </g>
+  <g>
+    <rect x="334" y="394" width="270" height="196" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <circle cx="360" cy="420" r="14" fill="#6B6F76"/><text x="355" y="425" class="n">2</text>
+    <text x="384" y="426" class="t">Settings are restored</text>
+    <text x="352" y="458" class="s">The free-mode settings are</text>
+    <text x="352" y="478" class="s">removed. Your own values come</text>
+    <text x="352" y="498" class="s">back, for example your paid</text>
+    <text x="352" y="518" class="s">model (Opus).</text>
+  </g>
+  <g>
+    <rect x="644" y="394" width="230" height="196" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <circle cx="670" cy="420" r="14" fill="#6B6F76"/><text x="665" y="425" class="n">3</text>
+    <text x="694" y="426" class="t">Reload the window</text>
+    <text x="662" y="458" class="s">The Mac shortcut reloads</text>
+    <text x="662" y="478" class="s">by itself. Otherwise:</text>
+    <text x="662" y="498" class="s">Cmd/Ctrl+Shift+P →</text>
+    <text x="662" y="518" class="s">Developer: Reload Window</text>
+  </g>
+  <g>
+    <rect x="914" y="394" width="442" height="196" rx="12" fill="#fff" stroke="#C9C8C2"/>
+    <circle cx="940" cy="420" r="14" fill="#6B6F76"/><text x="935" y="425" class="n">4</text>
+    <text x="964" y="426" class="t">Claude Code uses your paid plan</text>
+    <rect x="934" y="450" width="120" height="48" rx="8" fill="#F2F1EC"/><text x="947" y="479" class="s">Claude Code</text>
+    <rect x="1084" y="450" width="190" height="48" rx="8" fill="#F2F1EC"/><text x="1098" y="479" class="s">Anthropic (paid)</text>
+    <path d="M1054,474 L1082,474" stroke="#6B6F76" stroke-width="2" marker-end="url(#p)"/>
+    <text x="934" y="540" class="s">Same as before you installed this tool.</text>
+    <text x="934" y="560" class="s">Each project keeps its own mode.</text>
+  </g>
+  <path d="M294,492 L332,492" stroke="#6B6F76" stroke-width="2.4" marker-end="url(#p)"/>
+  <path d="M604,492 L642,492" stroke="#6B6F76" stroke-width="2.4" marker-end="url(#p)"/>
+  <path d="M874,492 L912,492" stroke="#6B6F76" stroke-width="2.4" marker-end="url(#p)"/>
+</svg>
+</body></html>
